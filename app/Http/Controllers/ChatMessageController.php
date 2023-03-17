@@ -39,12 +39,7 @@ class ChatMessageController extends Controller
         return $this->success($messages->getCollection());
     }
 
-    /**
-     * Create a chat message
-     *
-     * @param StoreMessageRequest $request
-     * @return JsonResponse
-     */
+   
     public function store(StoreMessageRequest $request) : JsonResponse
     {
         $data = $request->validated();
@@ -59,38 +54,6 @@ class ChatMessageController extends Controller
         return $this->success($chatMessage,'Message has been sent successfully.');
     }
 
-    /**
-     * Send notification to other users
-     *
-     * @param ChatMessage $chatMessage
-     */
-    private function sendNotificationToOther(ChatMsg $chatMessage) : void {
-
-        broadcast(new NewMessageSent($chatMessage))->toOthers();
-
-        $user = auth()->user();
-        $userId = $user->id;
-
-        $chat = Chat::where('id',$chatMessage->chat_id)
-            ->with(['participants'=>function($query) use ($userId){
-                $query->where('user_id','!=',$userId);
-            }])
-            ->first();
-        if(count($chat->participants) > 0){
-            $otherUserId = $chat->participants[0]->user_id;
-
-            $otherUser = User::where('id',$otherUserId)->first();
-            $otherUser->sendNewMessageNotification([
-                'messageData'=>[
-                    'senderName'=>$user->username,
-                    'message'=>$chatMessage->message,
-                    'chatId'=>$chatMessage->chat_id
-                ]
-            ]);
-
-        }
-
-    }
-
+    
 
 }
